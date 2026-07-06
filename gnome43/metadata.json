@@ -1,8 +1,8 @@
 {
   "uuid": "recentplaces@janvavra81",
   "name": "Places + Recent Indicator",
-  "description": "Nautilus bookmarks and recent files in the top panel. Click a bookmarked folder to open it in Nautilus. Left-click a recent file to reveal it in the file manager, right-click to open it in its default application.",
+  "description": "Nautilus bookmarks and recent files in the top panel. Click a bookmarked folder to open it in Nautilus. Left-click a recent file to open it in its default application, right-click to reveal it in the file manager.",
   "shell-version": ["43", "44"],
   "gettext-domain": "recentplaces",
-  "url": ""
+  "url": "https://github.com/janvavra81/gnome-extension-recentplaces"
 }

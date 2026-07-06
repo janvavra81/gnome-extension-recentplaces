@@ -1,46 +1,46 @@
 # Places + Recent Indicator
 
-GNOME Shell extenze — ikona adresáře v horním panelu, po kliknutí menu se dvěma částmi:
+GNOME Shell extension — a folder icon in the top panel that opens a menu with two sections:
 
-1. **Oblíbené adresáře** — záložky z Nautilusu (`~/.config/gtk-3.0/bookmarks`); kliknutí otevře adresář v Nautilusu.
-2. **Nedávné soubory** — naposledy přidané záznamy z `~/.local/share/recently-used.xbel` (max. 10, jen existující lokální soubory):
-   - **levé tlačítko** — spustí soubor ve výchozí aplikaci,
-   - **pravé tlačítko** — otevře adresář souboru v Nautilusu (soubor se v něm zvýrazní).
+1. **Bookmarked folders** — Nautilus bookmarks (`~/.config/gtk-3.0/bookmarks`); clicking one opens it in Nautilus.
+2. **Recent files** — the most recently added entries from `~/.local/share/recently-used.xbel` (max. 10, existing local files only):
+   - **left click** — opens the file in its default application,
+   - **right click** — opens the file's folder in Nautilus (the file is highlighted there).
 
-Každá položka má ikonu (adresáře ikonu složky, soubory symbolickou ikonu podle MIME typu). Obsah menu se načítá vždy znovu při jeho otevření, takže je stále aktuální. Extenze nemá žádné nastavení.
+Every item has an icon (folders get a folder icon, files get a symbolic icon based on their MIME type). The menu contents are reloaded every time it's opened, so they're always up to date. The extension has no settings.
 
-UUID: `recentplaces@janvavra81`, licence GPL-2.0-or-later.
+UUID: `recentplaces@janvavra81`, license GPL-2.0-or-later.
 
-## Struktura projektu
+## Project layout
 
-GNOME 45 přešel na ES moduly, které nejsou zpětně kompatibilní, proto existují dvě varianty
-se stejnou funkcionalitou (při úpravách je nutné měnit obě):
+GNOME 45 switched to ES modules, which aren't backwards compatible, so there are two variants
+with identical functionality (both need to be updated when making changes):
 
 ```
-gnome43/   varianta pro GNOME Shell 43–44 (legacy imports)
-gnome45/   varianta pro GNOME Shell 45–49 (ESM)
-po/        překlady (gettext, domain "recentplaces")
-build.sh   sestaví oba zipy pro upload do dist/
+gnome43/   variant for GNOME Shell 43–44 (legacy imports)
+gnome45/   variant for GNOME Shell 45–49 (ESM)
+po/        translations (gettext, domain "recentplaces")
+build.sh   builds both zips for upload into dist/
 ```
 
-## Sestavení balíčků
+## Building the packages
 
 ```bash
 ./build.sh
 ```
 
-Vytvoří v `dist/` dva zipy (`…gnome-43-44.zip` a `…gnome-45-49.zip`) včetně zkompilovaných překladů.
+Produces two zips in `dist/` (`…gnome-43-44.zip` and `…gnome-45-49.zip`), including compiled translations.
 
-## Upload na extensions.gnome.org
+## Uploading to extensions.gnome.org
 
-1. Přihlásit se na https://extensions.gnome.org/
-2. Otevřít https://extensions.gnome.org/upload/
-3. Nahrát **oba** zipy z `dist/` (postupně, každý zvlášť) — mají stejné UUID,
-   e.g.o. pak sám nabízí správnou verzi podle verze GNOME Shellu návštěvníka.
-4. Počkat na schválení reviewerem (může trvat dny až týdny); případné připomínky
-   chodí e-mailem a zobrazují se u extenze po přihlášení.
+1. Log in at https://extensions.gnome.org/
+2. Open https://extensions.gnome.org/upload/
+3. Upload **both** zips from `dist/` (one at a time) — they share the same UUID,
+   so e.g.o. serves the right one based on the visitor's GNOME Shell version.
+4. Wait for reviewer approval (can take days to weeks); any review comments
+   arrive by e-mail and show up on the extension page once logged in.
 
-## Lokální instalace (GNOME 43)
+## Local installation (GNOME 43)
 
 ```bash
 ln -sfn "$(pwd)/gnome43" ~/.local/share/gnome-shell/extensions/recentplaces@janvavra81
@@ -48,9 +48,9 @@ msgfmt po/cs.po -o gnome43/locale/cs/LC_MESSAGES/recentplaces.mo
 gnome-extensions enable recentplaces@janvavra81
 ```
 
-Po první instalaci (nebo změně kódu) je potřeba se odhlásit a přihlásit — na Waylandu nelze shell restartovat za běhu.
+After the first install (or any code change) you need to log out and back in — on Wayland the shell can't be restarted while running.
 
-## Testování bez odhlášení
+## Testing without logging out
 
 ```bash
 dbus-run-session -- gnome-shell --nested --wayland

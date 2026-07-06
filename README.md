@@ -31,15 +31,6 @@ build.sh   builds both zips for upload into dist/
 
 Produces two zips in `dist/` (`…gnome-43-44.zip` and `…gnome-45-49.zip`), including compiled translations.
 
-## Uploading to extensions.gnome.org
-
-1. Log in at https://extensions.gnome.org/
-2. Open https://extensions.gnome.org/upload/
-3. Upload **both** zips from `dist/` (one at a time) — they share the same UUID,
-   so e.g.o. serves the right one based on the visitor's GNOME Shell version.
-4. Wait for reviewer approval (can take days to weeks); any review comments
-   arrive by e-mail and show up on the extension page once logged in.
-
 ## Local installation (GNOME 43)
 
 ```bash

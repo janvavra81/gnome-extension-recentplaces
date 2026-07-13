@@ -20,11 +20,13 @@ import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/ex
 
 const MAX_RECENT_ITEMS = 10;
 
-function _loadTextFile(path) {
+Gio._promisify(Gio.File.prototype, 'load_contents_async', 'load_contents_finish');
+
+/* Reads a file asynchronously so the shell's main loop isn't blocked. */
+async function _loadTextFile(path) {
     try {
-        const [ok, contents] = GLib.file_get_contents(path);
-        if (!ok)
-            return null;
+        const file = Gio.File.new_for_path(path);
+        const [contents] = await file.load_contents_async(null);
         return new TextDecoder().decode(contents);
     } catch (e) {
         return null;
@@ -43,9 +45,9 @@ function _unescapeXml(text) {
 }
 
 /* Nautilus bookmarks from ~/.config/gtk-3.0/bookmarks – "URI [label]" lines. */
-function _getBookmarks() {
+async function _getBookmarks() {
     const path = GLib.build_filenamev([GLib.get_user_config_dir(), 'gtk-3.0', 'bookmarks']);
-    const text = _loadTextFile(path);
+    const text = await _loadTextFile(path);
     if (text === null)
         return [];
 
@@ -75,9 +77,9 @@ function _getBookmarks() {
 
 /* Recent files from ~/.local/share/recently-used.xbel, sorted by the date
  * they were added; only existing local files are listed. */
-function _getRecentFiles() {
+async function _getRecentFiles() {
     const path = GLib.build_filenamev([GLib.get_user_data_dir(), 'recently-used.xbel']);
-    const text = _loadTextFile(path);
+    const text = await _loadTextFile(path);
     if (text === null)
         return [];
 
@@ -174,21 +176,29 @@ class PlacesRecentIndicator extends PanelMenu.Button {
             style_class: 'system-status-icon',
         }));
 
-        this.menu.connect('open-state-changed', (_menu, open) => {
+        this._rebuildGeneration = 0;
+        this._openStateId = this.menu.connect('open-state-changed', (_menu, open) => {
             if (open)
-                this._rebuildMenu();
+                this._rebuildMenu().catch(logError);
         });
 
         /* An empty menu never opens (PopupMenu.open() bails out on
          * isEmpty()), so open-state-changed would never fire – the menu
          * must be populated right away. */
-        this._rebuildMenu();
+        this._rebuildMenu().catch(logError);
     }
 
-    _rebuildMenu() {
+    async _rebuildMenu() {
+        /* Discard the result if a newer rebuild was started meanwhile
+         * (e.g. the menu was closed and reopened before the file reads
+         * finished). */
+        const generation = ++this._rebuildGeneration;
+        const [bookmarks, recentFiles] = await Promise.all([_getBookmarks(), _getRecentFiles()]);
+        if (generation !== this._rebuildGeneration)
+            return;
+
         this.menu.removeAll();
 
-        const bookmarks = _getBookmarks();
         for (const bookmark of bookmarks) {
             const item = new PopupMenu.PopupImageMenuItem(bookmark.name, bookmark.icon);
             item.connect('activate', () => _launchUri(bookmark.uri));
@@ -199,7 +209,6 @@ class PlacesRecentIndicator extends PanelMenu.Button {
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem(_('Recent Files')));
 
-        const recentFiles = _getRecentFiles();
         for (const recent of recentFiles) {
             const item = new PopupMenu.PopupImageMenuItem(recent.name, recent.gicon);
             item.connect('activate', (_actor, event) => {
@@ -221,6 +230,14 @@ class PlacesRecentIndicator extends PanelMenu.Button {
         const item = new PopupMenu.PopupMenuItem(text);
         item.setSensitive(false);
         this.menu.addMenuItem(item);
+    }
+
+    destroy() {
+        if (this._openStateId) {
+            this.menu.disconnect(this._openStateId);
+            this._openStateId = null;
+        }
+        super.destroy();
     }
 });
 
